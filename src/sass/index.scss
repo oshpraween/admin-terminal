@@ -1,0 +1,60 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
+@import url('./variables.scss');
+
+.dark body {
+  @apply bg-dark-bg-base text-dark-text-base;
+}
+
+.scrollbar-thin {
+  scrollbar-width: thin;
+}
+
+.scrollbar-stable {
+  scrollbar-gutter: stable;
+}
+
+.menu-search-modal {
+  .ant-modal-content {
+    @apply p-0;
+  }
+}
+
+/* Target the scrollable body of Ant Table */
+.ant-table-body {
+  scrollbar-width: thin;
+  scrollbar-color: #eaeaea transparent;
+  scrollbar-gutter: stable;
+}
+
+.ant-pagination-item {
+  margin-left: 5px !important;
+  margin-right: 5px !important;
+  border: 1px #d9d9d9 solid !important;
+}
+
+.ant-table-pagination {
+  background-color: #ffffff;
+}
+
+.ant-table-pagination.ant-pagination {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  padding: 10px;
+}
+
+/* Remove Table footer/pagination padding */
+.ant-table-footer {
+  padding: 0 !important;
+}
+
+:where(.ant-list-item-meta-avatar) {
+  margin-inline-end: 0.5rem !important;
+}
+
+.search-input :where(.ant-input)::placeholder {
+  color: var(--ant-tw-primary) !important;
+}

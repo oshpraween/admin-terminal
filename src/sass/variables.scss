@@ -1,0 +1,24 @@
+/*
+  * Below variables will be replaced during runtime
+  * Configure the colors in light-theme-variations.ts file
+
+  * Configure the colors in dark-theme-variations.ts file (not yet created)
+*/
+
+:root {
+  --ant-tw-primary: #0f48ab;
+
+  --ant-tw-secondary: #6c757d;
+  --ant-tw-secondary-hover: #dbdcdd;
+  --ant-tw-secondary-text: #606060;
+  --ant-tw-secondary-border: #dbdcdd;
+}
+
+.dark {
+  --ant-tw-primary: #0261e6;
+
+  --ant-tw-secondary: #323232;
+  --ant-tw-secondary-hover: #4d4f50;
+  --ant-tw-secondary-text: #c6c6c6;
+  --ant-tw-secondary-border: #4d4f50;
+}

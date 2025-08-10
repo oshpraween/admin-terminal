@@ -1,0 +1,35 @@
+{
+  "labels": {
+    "language": "English",
+    "login": "Login",
+    "productName": "Terminal X",
+    "username": "Username",
+    "password": "Password",
+    "general": "General",
+    "light": "Light",
+    "dark": "Dark",
+    "themes": "Themes",
+    "appearance": "Appearance",
+    "theme": "Theme",
+    "user": "User",
+    "connectionSettings": "Connection Settings",
+    "institution": "Institution",
+    "cacheClear": "Cache Clear",
+    "aboutUs": "About Us",
+    "logout": "Logout",
+    "languageModeText": "العربية",
+    "hideSidebar": "Hide Sidebar",
+    "showSidebar": "Show Sidebar",
+    "searchMenu": "Search Menu..."
+  },
+
+  "messages": {
+    "welcomeMsg1": "Empower Control, Simplify Workflows!",
+    "welcomeMsg2": "Manage Smarter, Work Faster!",
+    "welcomeMsg3": "One Platform. Total Control.",
+    "welcomeMsg4": "Unlock Productivity with Us",
+    "welcomeMsgSub": "Unlock async productivity and achieve more with Us",
+    "loginDisclamer": "Authorized users only. Use of this system implies consent to monitoring and may result in legal action for unauthorized access.",
+    "copyright": "All rights reserved."
+  }
+}

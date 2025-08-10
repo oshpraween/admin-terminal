@@ -1,0 +1,35 @@
+{
+  "labels": {
+    "language": "العربية",
+    "login": "تسجيل الدخول",
+    "productName": "محطة الإدارة",
+    "username": "اسم المستخدم",
+    "password": "كلمة المرور",
+    "general": "General Arabic",
+    "light": "Light",
+    "dark": "Dark",
+    "themes": "Themes",
+    "appearance": "Appearance",
+    "theme": "Theme",
+    "user": "User",
+    "connectionSettings": "Connection Settings",
+    "institution": "Institution",
+    "cacheClear": "Cache Clear",
+    "aboutUs": "About Us",
+    "logout": "Logout",
+    "languageModeText": "English",
+    "hideSidebar": "Hide Sidebar",
+    "showSidebar": "Show Sidebar",
+    "searchMenu": "Search Menu..."
+  },
+
+  "messages": {
+    "welcomeMsg1": "تمكين التحكم، تبسيط سير العمل!",
+    "welcomeMsg2": "إدارة أذكى، عمل أسرع!",
+    "welcomeMsg3": "منصة واحدة. تحكم كامل.",
+    "welcomeMsg4": "افتح الإنتاجية مع FintX",
+    "welcomeMsgSub": "إطلاق العنان للإنتاجية غير المتزامنة وتحقيق المزيد مع FintX",
+    "loginDisclamer": "للمستخدمين المُصرّح لهم فقط. استخدام هذا النظام يعني الموافقة على المراقبة، وقد يُعرّض أي وصول غير مُصرّح به للمساءلة القانونية.",
+    "copyright": "جميع الحقوق محفوظة."
+  }
+}
