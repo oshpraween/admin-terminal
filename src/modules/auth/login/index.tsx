@@ -149,8 +149,8 @@ const Login: React.FC = () => {
 
   useEffect(() => {
     const checkResolution = () => {
-      const minWidth = 1024;
-      const minHeight = 720;
+      const minWidth = 768;
+      const minHeight = 600;
       setIsScreenTooSmall(
         window.innerWidth < minWidth || window.innerHeight < minHeight
       );
