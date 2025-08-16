@@ -77,6 +77,8 @@ function MenuSearch() {
     setSearchTerm(e.target.value);
   };
 
+  //new function that  flattens to simplify searching.
+
   const flattenRoutesForSearch = useCallback(
     (routes: MenuSearchItem[]): MenuSearchItem[] => {
       const uniqueRoutes = new Map<string, MenuSearchItem>();
@@ -580,6 +582,7 @@ function MenuSearch() {
               <Breadcrumb separator=">" items={breadCrumbArray} />
               <Space size={'large'}>
                 {isSearchModalOpen && (
+                  //AutoComplete for a smarter search experience
                   <AutoComplete
                     style={{
                       width: '400px',
@@ -597,6 +600,7 @@ function MenuSearch() {
                     allowClear
                     showSearch
                     filterOption={false}
+                    //"Not Found" Handling
                     notFoundContent={
                       searchTerm && searchTerm.trim().length > 0 ? (
                         <div
