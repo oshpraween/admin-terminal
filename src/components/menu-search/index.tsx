@@ -130,44 +130,58 @@ function MenuSearch() {
     []
   );
 
-  //new
+  //new ........................................................................
+
+  // Replace your existing filteredOptions useMemo with this:
+
   const filteredOptions = useMemo(() => {
     if (!searchTerm) return [];
 
-    const allItems: MenuSearchItem[] = [];
-    const collectItems = (routes: MenuSearchItem[]) => {
+    const allItems: { item: MenuSearchItem; parentTitle: string }[] = [];
+
+    const collectItems = (
+      routes: MenuSearchItem[],
+      parentTitle: string = ''
+    ) => {
       routes.forEach((route) => {
         if (route.children && route.children.length > 0) {
-          collectItems(route.children);
+          // For parent routes with children, collect children with parent context
+          collectItems(route.children, route.title || '');
         } else {
-          allItems.push(route);
+          // Only collect leaf nodes (routes without children) with their parent title
+          // Skip if parent title is same as item title to avoid duplicates like "system/system"
+          if (route.title && route.path && route.title !== parentTitle) {
+            allItems.push({ item: route, parentTitle });
+          }
         }
       });
     };
+
     collectItems(currentRoutes);
 
-    const filtered = allItems.filter(
-      (item) =>
-        item.title &&
-        item.title.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filtered = allItems.filter(({ item, parentTitle }) => {
+      const fullLabel = parentTitle
+        ? `${item.title}/${parentTitle}`
+        : parentTitle;
+      const searchLower = searchTerm.toLowerCase();
 
-    return filtered.map((item) => {
-      const title = item.title || ''; // fallback if undefined
-      const label =
-        title.toLowerCase() === (item.path || '').toLowerCase()
-          ? title
-          : `${title}/${item.path || ''}`;
+      return fullLabel && fullLabel.toLowerCase().includes(searchLower);
+    });
+
+    return filtered.map(({ item, parentTitle }) => {
+      // Build the display label with parent/child format
+      const label = parentTitle ? `${item.title}/${parentTitle}` : parentTitle;
 
       return {
-        value: item.path || '',
-        label,
-        path: item.path || '',
-        title,
+        value: item.path,
+        label: label, // This will show "Trading/system" format
+        path: item.path,
+        title: item.title,
       };
     });
   }, [currentRoutes, searchTerm]);
 
+  //const label = parentTitle ? `${item.title}/${parentTitle}` : parentTitle;
   const initiateMenuSearch = () => {
     const routes = prepareNestedRoutes(routePaths);
     const allRoute: MenuSearchItem = {
