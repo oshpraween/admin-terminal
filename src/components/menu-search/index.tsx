@@ -32,12 +32,14 @@ import {
   selectShowMenuSearch,
   toggleMenuSearch,
 } from 'src/store/reducer/layout.slice';
+import Highlighter from 'react-highlight-words';
 import {
   addFavouritesTab,
   removeFromFavourites,
   selectFavouriteTabs,
 } from 'src/store/reducer/settings.slice';
 import { useRecentButtonClick } from 'src/hooks/use-recent-click';
+
 import { AutoComplete } from 'antd';
 
 export interface MenuSearchItem extends PathItem {
@@ -74,43 +76,6 @@ function MenuSearch() {
     }
     setSearchTerm(e.target.value);
   };
-
-  // Function that flattens to simplify searching
-  const flattenRoutesForSearch = useCallback(
-    (routes: MenuSearchItem[]): MenuSearchItem[] => {
-      const uniqueRoutes = new Map<string, MenuSearchItem>();
-      const excluded = ['login', '*', ''];
-
-      const flatten = (routeList: MenuSearchItem[]) => {
-        routeList.forEach((route) => {
-          // Only add routes with valid path and title, avoid duplicates and excluded routes
-          if (
-            route.path &&
-            route.title &&
-            route.path !== '' &&
-            route.title !== '' &&
-            !excluded.some((exc) =>
-              route.path.toLowerCase().includes(exc.toLowerCase())
-            )
-          ) {
-            const key = `${route.path}-${route.title}`;
-            if (!uniqueRoutes.has(key)) {
-              uniqueRoutes.set(key, route);
-            }
-          }
-
-          // Recursively process children
-          if (route.children && route.children.length > 0) {
-            flatten(route.children);
-          }
-        });
-      };
-
-      flatten(routes);
-      return Array.from(uniqueRoutes.values());
-    },
-    []
-  );
 
   const prepareNestedRoutes = useCallback(
     (flatRoutes: MenuSearchItem[]): NestedRouteItem[] => {
@@ -164,6 +129,44 @@ function MenuSearch() {
     },
     []
   );
+
+  //new
+  const filteredOptions = useMemo(() => {
+    if (!searchTerm) return [];
+
+    const allItems: MenuSearchItem[] = [];
+    const collectItems = (routes: MenuSearchItem[]) => {
+      routes.forEach((route) => {
+        if (route.children && route.children.length > 0) {
+          collectItems(route.children);
+        } else {
+          allItems.push(route);
+        }
+      });
+    };
+    collectItems(currentRoutes);
+
+    const filtered = allItems.filter(
+      (item) =>
+        item.title &&
+        item.title.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    return filtered.map((item) => {
+      const title = item.title || ''; // fallback if undefined
+      const label =
+        title.toLowerCase() === (item.path || '').toLowerCase()
+          ? title
+          : `${title}/${item.path || ''}`;
+
+      return {
+        value: item.path || '',
+        label,
+        path: item.path || '',
+        title,
+      };
+    });
+  }, [currentRoutes, searchTerm]);
 
   const initiateMenuSearch = () => {
     const routes = prepareNestedRoutes(routePaths);
@@ -235,154 +238,15 @@ function MenuSearch() {
     dispatch(toggleMenuSearch());
   };
 
-  // Fixed AutoComplete options with better filtering and validation
-  const autoCompleteOptions = useMemo(() => {
-    if (!searchTerm || searchTerm.trim().length === 0) return [];
-
-    const searchTermLower = searchTerm.toLowerCase().trim();
-
-    // Get all routes from master data, excluding the "All" option
-    const allRoutes = routesMasterData
-      .filter((route) => route.title !== 'All') // Exclude the "All" option
-      .flatMap((route) => {
-        const routes: MenuSearchItem[] = [];
-
-        // Only add parent routes if they don't have children (i.e., they are actual navigable routes)
-        if (
-          route.path &&
-          route.title &&
-          route.path !== '' &&
-          (!route.children || route.children.length === 0)
-        ) {
-          routes.push(route);
-        }
-
-        // Add all children (these are the actual navigable pages)
-        if (route.children) {
-          routes.push(
-            ...route.children.filter(
-              (child) => child.path && child.title && child.path !== ''
-            )
-          );
-        }
-
-        return routes;
-      });
-
-    // Enhanced filtering with better validation
-    const seenRoutes = new Set<string>();
-    const filteredRoutes = allRoutes.filter((route) => {
-      // Skip invalid routes
-      if (
-        !route.path ||
-        !route.title ||
-        route.path === '' ||
-        route.title === ''
-      ) {
-        return false;
-      }
-
-      // Create unique key
-      const routeKey = `${route.path}-${route.title}`;
-
-      // Skip duplicates
-      if (seenRoutes.has(routeKey)) {
-        return false;
-      }
-
-      // Check if route matches search term - ONLY match against title
-      const titleMatch = route.title.toLowerCase().includes(searchTermLower);
-
-      const isMatch = titleMatch;
-
-      if (isMatch) {
-        seenRoutes.add(routeKey);
-        return true;
-      }
-
-      return false;
-    });
-
-    // Sort results by relevance (exact title matches first, then starts with, then contains)
-    const sortedRoutes = filteredRoutes.sort((a, b) => {
-      const aTitle = (a.title || '').toLowerCase();
-      const bTitle = (b.title || '').toLowerCase();
-
-      const aExactMatch = aTitle === searchTermLower;
-      const bExactMatch = bTitle === searchTermLower;
-
-      if (aExactMatch && !bExactMatch) return -1;
-      if (!aExactMatch && bExactMatch) return 1;
-
-      const aStartsWithMatch = aTitle.startsWith(searchTermLower);
-      const bStartsWithMatch = bTitle.startsWith(searchTermLower);
-
-      if (aStartsWithMatch && !bStartsWithMatch) return -1;
-      if (!aStartsWithMatch && bStartsWithMatch) return 1;
-
-      return aTitle.localeCompare(bTitle);
-    });
-
-    // Limit results to prevent performance issues
-    const limitedResults = sortedRoutes.slice(0, 10);
-
-    return limitedResults.map((route, index) => ({
-      value: route.title || `route-${index}`,
-      key: `${route.path}-${route.title}-${index}`,
-      routeItem: route,
-      label: (
-        <div
-          style={{
-            padding: '8px 12px',
-            borderBottom:
-              index < limitedResults.length - 1 ? '1px solid #f0f0f0' : 'none',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '8px',
-          }}
-        >
-          <div
-            style={{
-              fontSize: '14px',
-              fontWeight: '500',
-              color: '#262626',
-            }}
-          >
-            {route.title}
-          </div>
-          <div
-            style={{
-              fontSize: '11px',
-              color: '#999999',
-              fontFamily: 'monospace',
-              fontWeight: '400',
-              backgroundColor: '#f5f5f5',
-              padding: '2px 6px',
-              borderRadius: '3px',
-            }}
-          >
-            {(() => {
-              // Extract main route path (first segment only)
-              const pathSegments = route.path
-                .split('/')
-                .filter((segment) => segment !== '');
-              return pathSegments.length > 0
-                ? `/${pathSegments[0]}`
-                : route.path;
-            })()}
-          </div>
-        </div>
-      ),
-    }));
-  }, [searchTerm, routesMasterData]);
-
-  const onChangeSearchText = (value: string) => {
+  const onChangeSearchText = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (selectedMenu !== 'All') {
       setSelectedMenu('All');
+      setSearchTerm('');
+
       initiateMenuSearch();
     }
 
+    const value = e.target.value.toLowerCase();
     setSearchTerm(value);
 
     if (value.trim() === '') {
@@ -398,7 +262,6 @@ function MenuSearch() {
           ),
         },
       ]);
-      setCurrentRoutes(prepareNestedRoutes(routePaths));
     } else {
       setBreadCrumbArray([
         {
@@ -415,23 +278,6 @@ function MenuSearch() {
           title: 'Search Results',
         },
       ]);
-
-      // Filter routes based on search term with better validation
-      const searchTermLower = value.toLowerCase().trim();
-      const allRoutes = flattenRoutesForSearch(routesMasterData);
-      const filteredRoutes = allRoutes.filter(
-        (route) =>
-          route.title &&
-          route.path && // Ensure valid routes
-          (route.title.toLowerCase().includes(searchTermLower) ||
-            route.path.toLowerCase().includes(searchTermLower) ||
-            (route.description &&
-              route.description.toLowerCase().includes(searchTermLower)))
-      );
-
-      // Group filtered routes back into nested structure
-      const groupedResults = prepareNestedRoutes(filteredRoutes);
-      setCurrentRoutes(groupedResults);
     }
   };
 
@@ -463,23 +309,15 @@ function MenuSearch() {
     }
   };
 
-  const checkFilterMatch = (route: MenuSearchItem): boolean => {
-    if (!searchTerm || searchTerm.trim() === '') {
-      return true; // Show all items when no search term
-    }
-
-    // Ensure route has valid properties before checking
-    if (!route.title || !route.path) {
-      return false;
-    }
-
-    const searchTermLower = searchTerm.toLowerCase().trim();
+  const checkFilterMatch = (route: MenuSearchItem) => {
     return (
-      route.title.toLowerCase().includes(searchTermLower) ||
-      route.path.toLowerCase().includes(searchTermLower) ||
-      (route.description
-        ? route.description.toLowerCase().includes(searchTermLower)
-        : false)
+      !!route.isElementFound &&
+      ((route.title?.toLowerCase().includes(searchTerm.toLowerCase()) ??
+        false) ||
+        (route.path?.toLowerCase().includes(searchTerm.toLowerCase()) ??
+          false) ||
+        (route.description?.toLowerCase().includes(searchTerm.toLowerCase()) ??
+          false))
     );
   };
 
@@ -507,14 +345,25 @@ function MenuSearch() {
         onClick={() => navigateToMenu(item)}
       >
         <Title level={5} className="text-text-tertiary !mb-0 leading-3">
-          {item.title ? item.title.toString() : ''}
+          <Highlighter
+            highlightStyle={{ backgroundColor: '#ffc069', padding: 0 }}
+            searchWords={[searchTerm]}
+            autoEscape
+            textToHighlight={item.title ? item.title.toString() : ''}
+          />
         </Title>
         <Tooltip title={item.description} placement="bottom">
-          <div className="line-clamp-1">
-            {item.description
-              ? item.description.toString()
-              : 'Description not found'}
-          </div>
+          <Highlighter
+            highlightStyle={{ backgroundColor: '#ffc069', padding: 0 }}
+            searchWords={[searchTerm]}
+            autoEscape
+            textToHighlight={
+              item.description
+                ? item.description.toString()
+                : 'Description not found'
+            }
+            className="line-clamp-1"
+          />
         </Tooltip>
       </Col>
       <Col
@@ -529,13 +378,6 @@ function MenuSearch() {
 
   const isFavouriteMenu = (item: PathItem) => {
     return favouriteMenus.find((menu) => menu.path === item.path);
-  };
-
-  const clearSearch = () => {
-    setSearchTerm('');
-    if (searchInputRef.current) {
-      searchInputRef.current.focus();
-    }
   };
 
   return (
@@ -600,84 +442,42 @@ function MenuSearch() {
             </Space>
           </Col>
           <Col span={21}>
-            <Flex className="border-b-2 dark:border-slate-700 py-3 px-4 justify-between items-center">
+            <Flex className="border-b-2 dark:border-slate-700 py-2 px-4 justify-between items-center">
               <Breadcrumb separator=">" items={breadCrumbArray} />
-
-              <div className="flex items-center gap-4">
+              <Space size={'large'}>
                 {isSearchModalOpen && (
                   <AutoComplete
-                    style={{
-                      width: '400px',
-                      minWidth: '300px',
-                    }}
-                    options={autoCompleteOptions}
+                    style={{ width: '100%' }}
+                    options={filteredOptions}
                     value={searchTerm}
-                    onSearch={onChangeSearchText}
+                    onChange={(value) => setSearchTerm(value)}
                     onSelect={(value, option) => {
-                      const item = (option as any).routeItem as MenuSearchItem;
-                      if (item && item.path && item.title) {
-                        navigateToMenu(item);
+                      if (option && option.path) {
+                        navigateToMenu({
+                          title: option.title!,
+                          path: option.path,
+                        });
                       }
-                    }}
-                    allowClear={true}
-                    showSearch
-                    filterOption={false}
-                    notFoundContent={
-                      searchTerm &&
-                      searchTerm.trim().length > 0 &&
-                      autoCompleteOptions.length === 0 ? (
-                        <div
-                          style={{
-                            padding: '12px',
-                            textAlign: 'center',
-                            color: '#bfbfbf',
-                          }}
-                        >
-                          <SearchOutlined style={{ marginRight: '8px' }} />
-                          No results found for "{searchTerm}"
-                        </div>
-                      ) : null
-                    }
-                    placeholder="Search Menu"
-                    dropdownStyle={{
-                      maxHeight: '400px',
-                      overflow: 'auto',
-                      boxShadow: '0 6px 16px 0 rgba(0, 0, 0, 0.08)',
-                      borderRadius: '6px',
                     }}
                   >
                     <Input
                       ref={searchInputRef}
+                      size={'small'}
+                      placeholder={t('labels.searchMenu')}
                       prefix={
-                        <SearchOutlined
-                          style={{
-                            marginRight: '8px',
-                            color: '#8c8c8c',
-                            fontSize: '14px',
-                          }}
-                        />
+                        <SearchOutlined className="text-text-tertiary mr-2" />
                       }
-                      size="middle"
+                      className="!shadow-none hover:border-primary"
                       autoFocus
-                      style={{
-                        borderRadius: '6px',
-                        border: '1px solid #d9d9d9',
-                        transition: 'all 0.3s',
-                        height: '32px',
-                      }}
                     />
                   </AutoComplete>
                 )}
 
                 <CloseOutlined
-                  className="cursor-pointer text-gray-600 hover:text-red-600 transition-colors duration-200"
-                  style={{
-                    fontSize: '16px',
-                    padding: '4px',
-                  }}
+                  className="cursor-pointer text-lg hover:text-red-800"
                   onClick={() => dispatch(toggleMenuSearch())}
                 />
-              </div>
+              </Space>
             </Flex>
 
             <RenderSearchResults
